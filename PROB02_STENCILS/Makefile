@@ -23,6 +23,7 @@
 
 # Increments to use in the local tests
 MIN=16
+# MAX=32
 MAX=512
 STEP=16
 
@@ -32,7 +33,7 @@ KMEDIUM=7
 KLARGE=11
 
 # This is just for local runs
-NUMRANKS=4 
+NUMRANKS=16 
 
 # You should not need to adjust this
 MPIVER_SCHOONER="OpenMPI"
