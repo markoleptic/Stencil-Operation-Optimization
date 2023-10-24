@@ -48,11 +48,9 @@ SHELL:=/bin/bash
 
 clean:
 	rm -f *.x *~ *.o
-	find .. -type f -name "*.o" -exec rm {} \;
 
 cleanall: clean
 	rm -f *.csv *.png
-	find .. -type f -name "*.o" -exec rm {} \;
 
 all-schooner: build-verifier-schooner  build-bench-schooner 
 	sbatch parallel-prob.sbatch
