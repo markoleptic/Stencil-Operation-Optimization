@@ -33,6 +33,7 @@
 */
 
 #include <mpi.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,7 +58,6 @@
 #endif
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed, float *output_distributed)
-
 {
   int rid;
   int num_ranks;
@@ -68,16 +68,23 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
   MPI_Comm_rank(MPI_COMM_WORLD, &rid);
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
+  int input_length = m0;
+  int weights_length = k0;
+
   if (rid == root_rid)
   {
-    for (int i0 = 0; i0 < m0; ++i0)
+    omp_set_num_threads(2);
+    #pragma omp parallel
+    for (int i = 0; i < input_length; i++)
     {
-      float res = 0.0f;
-      for (int p0 = 0; p0 < k0; ++p0)
+      float res = 0.f;
+      for (int j = 0; j < weights_length; ++j)
       {
-        res += input_distributed[(p0 + i0) % m0] * weights_distributed[p0];
+        // if i + j exceeds input length, wrapping will occur. Compensate by subtracting input length
+        int input_index = (i + j < input_length) ? (i + j) : (i + j - input_length);
+        res += input_distributed[input_index] * weights_distributed[j];
       }
-      output_distributed[i0] = res;
+      output_distributed[i] = res;
     }
   }
   else
