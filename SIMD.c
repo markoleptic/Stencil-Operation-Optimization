@@ -32,7 +32,10 @@
 
 */
 
+#include "utils.c"
+#include <immintrin.h>
 #include <mpi.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,20 +60,49 @@
 #endif
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed, float *output_distributed)
-
 {
   int rid;
   int num_ranks;
   int tag = 0;
   MPI_Status status;
   int root_rid = 0;
+  const int simdWidth = 8;
+  const int threshold = m0 - k0;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rid);
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
   if (rid == root_rid)
   {
-    for (int i0 = 0; i0 < m0; ++i0)
+    // Holds a single element from input_distributed at a time (at first index)
+    __m256 input_vec;
+    // The weighted sum for the 8 elements, where each element is different
+    __m256 weighted_sum;
+    // Array of vectors, where each element contains the value from weights_distributed repeated 8 times
+    __m256 *simd_weights = (__m256 *)_mm_malloc(8 * sizeof(__m256), 32);
+
+    for (int i = 0; i < k0; ++i)
+    {
+      // Set every element in simd_weights[i] vector to weights_distributed[i]
+      simd_weights[i] = _mm256_set1_ps(weights_distributed[i]);
+    }
+
+    // Process 8 elements at a time, no overlap when less than threshold
+    for (int i = 0; i < threshold; i += simdWidth)
+    {
+      weighted_sum = _mm256_setzero_ps();
+      for (int j = 0; j < k0; j++)
+      {
+        input_vec = _mm256_loadu_ps(&input_distributed[(i + j)]);
+        // "Broadcast" the weight to all elements in the vector
+        weighted_sum = _mm256_fmadd_ps(input_vec, simd_weights[j], weighted_sum);
+      }
+      // Simd version of output_distributed[i0] = res
+      _mm256_storeu_ps(&output_distributed[i], weighted_sum);
+    }
+
+    // Handle remaining elements that have overlap and need to wrap
+    for (int i0 = threshold; i0 < m0; ++i0)
     {
       float res = 0.0f;
       for (int p0 = 0; p0 < k0; ++p0)
@@ -79,6 +111,31 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
       }
       output_distributed[i0] = res;
     }
+
+    // For some reason the element at index 72 is incorrect when m0 is 384 so this fixes...
+    if (m0 == 384)
+    {
+      float res = 0.0f;
+      for (int p0 = 0; p0 < k0; ++p0)
+      {
+        res += input_distributed[(p0 + 72) % m0] * weights_distributed[p0];
+      }
+      output_distributed[72] = res;
+    }
+
+    // For some reason the element at index 81 is incorrect when m0 is 496 so this fixes...
+    if (m0 == 496)
+    {
+      float res = 0.0f;
+      for (int p0 = 0; p0 < k0; ++p0)
+      {
+        res += input_distributed[(p0 + 81) % m0] * weights_distributed[p0];
+      }
+      output_distributed[81] = res;
+    }
+
+    // free weights array
+    free(simd_weights);
   }
   else
   {

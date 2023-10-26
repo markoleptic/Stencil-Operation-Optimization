@@ -33,7 +33,7 @@ KMEDIUM=7
 KLARGE=11
 
 # This is just for local runs
-NUMRANKS=16 
+NUMRANKS=8
 
 # You should not need to adjust this
 MPIVER_SCHOONER="OpenMPI"
@@ -51,7 +51,6 @@ clean:
 
 cleanall: clean
 	rm -f *.csv *.png
-
 
 all-schooner: build-verifier-schooner  build-bench-schooner 
 	sbatch parallel-prob.sbatch
@@ -74,6 +73,10 @@ run-verifier-local: build-verifier-local
 	cat result_verification_local_op_var02_k${KMEDIUM}.csv
 	mpiexec -n ${NUMRANKS} ./run_test_op_var03.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} result_verification_local_op_var03_k${KMEDIUM}.csv
 	cat result_verification_local_op_var03_k${KMEDIUM}.csv
+	mpiexec -n ${NUMRANKS} ./run_test_op_var04.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} result_verification_local_op_var04_k${KMEDIUM}.csv
+	cat result_verification_local_op_var04_k${KMEDIUM}.csv
+	mpiexec -n ${NUMRANKS} ./run_test_op_var05.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} result_verification_local_op_var05_k${KMEDIUM}.csv
+	cat result_verification_local_op_var05_k${KMEDIUM}.csv
 	echo "Number of FAILS: `grep "FAIL" result_verification_local_op_*.csv|wc -l`"
 
 
@@ -84,9 +87,11 @@ run-bench-local: build-bench-local
 	cat result_bench_local_op_var02_k${KMEDIUM}.csv
 	mpiexec -n ${NUMRANKS} ./run_bench_op_var03.x ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM}  result_bench_local_op_var03_k${KMEDIUM}.csv
 	cat result_bench_local_op_var03_k${KMEDIUM}.csv
-
-
-	./plotter_multi.py "Local Results of Stencil Computation" "PLOT_local.png" "result_bench_local_op_var01_k${KMEDIUM}.csv" "result_bench_local_op_var02_k${KMEDIUM}.csv" "result_bench_local_op_var03_k${KMEDIUM}.csv"
+	mpiexec -n ${NUMRANKS} ./run_bench_op_var04.x ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM}  result_bench_local_op_var04_k${KMEDIUM}.csv
+	cat result_bench_local_op_var04_k${KMEDIUM}.csv
+	mpiexec -n ${NUMRANKS} ./run_bench_op_var05.x ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM}  result_bench_local_op_var05_k${KMEDIUM}.csv
+	cat result_bench_local_op_var05_k${KMEDIUM}.csv
+	./plotter_multi.py "Local Results of Stencil Computation" "PLOT_local.png" "result_bench_local_op_var01_k${KMEDIUM}.csv" "result_bench_local_op_var02_k${KMEDIUM}.csv" "result_bench_local_op_var03_k${KMEDIUM}.csv" "result_bench_local_op_var04_k${KMEDIUM}.csv" "result_bench_local_op_var05_k${KMEDIUM}.csv"
 
 build-verifier-local:
 	./build_test_op.sh

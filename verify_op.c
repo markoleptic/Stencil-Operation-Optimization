@@ -335,7 +335,7 @@ int main( int argc, char *argv[] )
 	  
 	  // if our error is greater than some threshold
 	  if( res > ERROR_THRESHOLD )
-	    fprintf(result_file, "FAIL\n");
+	    fprintf(result_file, "FAIL Max Diff: %f \n", res);
 	  else
 	    fprintf(result_file, "PASS\n");
 	}

@@ -30,9 +30,78 @@
 
   - richard.m.veras@ou.edu
 
+  Original modulo removal:
+    for (int i = 0; i < input_length; i++)
+    {
+      float res = 0.f;
+      for (int j = 0; j < weights_length; ++j)
+      {
+        // if index exceeds length, overflow will occur. Wrap around by subtracting length
+        int index = (i + j >= input_length) ? (i + j - input_length) : (i + j);
+        res += input_distributed[index] * weights_distributed[j];
+      }
+      output_distributed[i] = res;
+    }
+
 */
+// Overflow condition, i + j will exceed input_length at some point in the j loop
+// if (i + weights_length >= input_length)
+// {
+//   // The end index or non-wrapping elements
+//   int end = 0;
+//   // No wrapping yet
+//   for (int j = 0; i + j < input_length; ++j)
+//   {
+//     res += input_distributed[j + i] * weights_distributed[j];
+//     end = j;
+//   }
+//   // Start wrapping elements by subtracting input length
+//   for (int j = end + 1; j < weights_length; ++j)
+//   {
+//     res += input_distributed[j + i - input_length] * weights_distributed[j];
+//   }
+// }
+// else
+// {
+//   // Default behavior (no overflow from i to i + weights_length - 1)
+//   res += input_distributed[j + i] * weights_distributed[j];
+// }
+
+
+    // for (int i = threshold; i < input_length; ++i)
+    // {
+    //   float res = 0.f;
+    //   // Overflow condition, i + j will exceed input_length at some point in the j loop
+    //   if (i + weights_length >= input_length)
+    //   {
+    //     // The end index or non-wrapping elements
+    //     int end = 0;
+    //     // No wrapping yet
+    //     for (int j = 0; i + j < input_length; ++j)
+    //     {
+    //       res += input_distributed[j + i] * weights_distributed[j];
+    //       end = j;
+    //     }
+    //     // Start wrapping elements by subtracting input length
+    //     for (int j = end + 1; j < weights_length; ++j)
+    //     {
+    //       res += input_distributed[j + i - input_length] * weights_distributed[j];
+    //     }
+    //   }
+    //   else
+    //   {
+    //     printf("else\n");
+    //     // Default behavior (no overflow from i to i + weights_length - 1)
+    //     for (int j = 0; j < weights_length; ++j)
+    //     {
+    //       res += input_distributed[j + i] * weights_distributed[j];
+    //     }
+    //   }
+    //   output_distributed[i] = res;
+    // }
 
 #include <mpi.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,27 +126,45 @@
 #endif
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed, float *output_distributed)
-
 {
   int rid;
   int num_ranks;
   int tag = 0;
   MPI_Status status;
   int root_rid = 0;
+  const int threshold = m0 - k0;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rid);
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
   if (rid == root_rid)
   {
-    for (int i0 = 0; i0 < m0; ++i0)
+    // No overflow
+    for (int i = 0; i < threshold; ++i)
     {
-      float res = 0.0f;
-      for (int p0 = 0; p0 < k0; ++p0)
+      float res = 0.f;
+      for (int j = 0; j < k0; ++j)
       {
-        res += input_distributed[(p0 + i0) % m0] * weights_distributed[p0];
+        res += input_distributed[j + i] * weights_distributed[j];
       }
-      output_distributed[i0] = res;
+      output_distributed[i] = res;
+    }
+
+    // Overflow possible
+    for (int i = threshold; i < m0; ++i)
+    {
+      float res = 0.f;
+      int end = 0;
+      for (int j = 0; i + j < m0; ++j)
+      {
+        res += input_distributed[j + i] * weights_distributed[j];
+        end = j;
+      }
+      for (int j = end + 1; j < k0; ++j)
+      {
+        res += input_distributed[j + i - m0] * weights_distributed[j];
+      }
+      output_distributed[i] = res;
     }
   }
   else

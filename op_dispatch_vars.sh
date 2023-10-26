@@ -15,14 +15,17 @@ OP_BASELINE_FILE="baseline_op.c"    #
 # HOWEVER, CHANGE THESE LINES:             #
 # Replace the filenames with your variants #
 ############################################
-OP_SUBMISSION_VAR01_FILE="MPI_Collective.c"
-OP_SUBMISSION_VAR02_FILE="MPI_Collective_v2.c"
-OP_SUBMISSION_VAR03_FILE="MPI_Collective_v3.c"
+
+OP_SUBMISSION_VAR01_FILE="SplittingAndUnswitching.c"
+OP_SUBMISSION_VAR02_FILE="MPI_Collective.c"
+OP_SUBMISSION_VAR03_FILE="MPI_Collective_v2.c"
+OP_SUBMISSION_VAR04_FILE="SIMD.c"
+OP_SUBMISSION_VAR05_FILE="MPI_Collective_v3.c"
 
 ######################################################
 # You can even change the compiler flags if you want #
 ######################################################
 CC=mpicc
 # CFLAGS="-std=c99 -O2"
-CFLAGS="-std=c99 -O2 -mavx2 -mfma"
+CFLAGS="-std=c99 -O2 -mavx2 -mfma -fopenmp"
 
