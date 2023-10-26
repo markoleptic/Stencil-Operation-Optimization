@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This may or may not need modification to run.
 # But in general you should modify this to get
