@@ -83,7 +83,7 @@ void COMPUTE_NAME(int m0, int k0,
       {
         int end = 0;
         // Do until wrap
-        for (int j = 0; i + j + node_offset < m0; ++j)
+        for (int j = 0; (i + j) + node_offset < m0; ++j)
         {
           res += input_distributed[i + j + node_offset] * weights_distributed[j];
           end = j;
@@ -154,13 +154,32 @@ void DISTRIBUTE_DATA_NAME(int m0, int k0,
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 	int num_elements_per_node = m0 / num_ranks;
 
-	// Scatter the input array to each node
-	memcpy(input_distributed, input_sequential, m0 * sizeof(float));
-	MPI_Bcast(input_distributed, m0, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	// Broadcast the input array to each node
+	if (rid == root_rid){
+		memcpy(input_distributed, input_sequential, m0 * sizeof(float));
+		for (int i = 0; i < num_ranks; i++)
+		{
+			if (i == root_rid) continue;
+			MPI_Send(input_distributed, m0, MPI_FLOAT, i, 0, MPI_COMM_WORLD);
+		}
+	}
+	else
+	{
+		MPI_Recv(input_distributed, m0, MPI_FLOAT, root_rid, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
 
-	// Scatter the weights to each node
-	memcpy(weights_distributed, weights_sequential, k0 * sizeof(float));
-	MPI_Bcast(weights_distributed, k0, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	// Broadcast the weights to each node
+	if (rid == root_rid){
+		memcpy(weights_distributed, weights_sequential, k0 * sizeof(float));
+		for (int i = 0; i < num_ranks; i++)
+		{
+			if (i == root_rid) continue;
+			MPI_Send(weights_distributed, k0, MPI_FLOAT, i, 0, MPI_COMM_WORLD);
+		}
+	}
+	else{
+		MPI_Recv(weights_distributed, k0, MPI_FLOAT, root_rid, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	}
 
 }
 
@@ -180,8 +199,25 @@ void COLLECT_DATA_NAME(int m0, int k0,
 	int num_elements_per_node = m0 / num_ranks;
 
 	// Gather all the elements from the nodes
-	MPI_Gather(output_distributed, num_elements_per_node, MPI_FLOAT,
-			   output_sequential, num_elements_per_node, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	if (rid == root_rid)
+	{
+		for (int i = 0; i < num_ranks; i++)
+		{
+			if (i == root_rid)
+			{
+				output_sequential[num_elements_per_node * root_rid] = output_distributed;
+			}
+			else
+			{
+				MPI_Recv(output_sequential[num_elements_per_node * i], num_elements_per_node, MPI_FLOAT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+		}
+	}
+	else
+	{
+		MPI_Send(output_distributed, num_elements_per_node, MPI_FLOAT, root_rid, 0, MPI_COMM_WORLD);
+	}
+
 }
 
 void DISTRIBUTED_FREE_NAME(int m0, int k0,
