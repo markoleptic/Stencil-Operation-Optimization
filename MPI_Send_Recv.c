@@ -1,5 +1,5 @@
 /*
-  This is the 1D stencil using MPI Collective Communications with
+  This is the 1D stencil using MPI Send and Receive with
   loop index set splitting and unswitching.
 
   Parameters:
@@ -205,7 +205,10 @@ void COLLECT_DATA_NAME(int m0, int k0,
 		{
 			if (i == root_rid)
 			{
-				output_sequential = output_distributed;
+				for (int j = 0; j < num_elements_per_node; j++)
+				{
+					output_sequential[j + num_elements_per_node * root_rid] = output_distributed[j];
+				}
 			}
 			else
 			{

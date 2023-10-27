@@ -15,6 +15,7 @@ OP_BASELINE_FILE="baseline_op.c"    #
 # HOWEVER, CHANGE THESE LINES:             #
 # Replace the filenames with your variants #
 ############################################
+
 OP_SUBMISSION_VAR01_FILE="SplittingAndUnswitching.c"
 OP_SUBMISSION_VAR02_FILE="MPI_Collective.c"
 OP_SUBMISSION_VAR03_FILE="MPI_Collective_v2.c"

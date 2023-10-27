@@ -73,41 +73,32 @@ void COMPUTE_NAME(int m0, int k0,
 	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 	int num_elements_per_node = m0 / num_ranks;
-
-	// for (int i = 0; i < num_elements_per_node; ++i)
-	// {
-	// 	float res = 0.0f;
-	// 	for (int j = 0; j < k0; ++j)
-	// 	{
-	// 		res += input_distributed[((i + j) + (rid * num_elements_per_node)) % m0] * weights_distributed[j];
-	// 	}
-	// 	output_distributed[i] = res;
-	// }
+	int node_offset = rid * num_elements_per_node;
 
 	for (int i = 0; i < num_elements_per_node; i++)
     {
       float res = 0.0f;
       // If there is going to be overflow
-      if (i + k0 + (rid * num_elements_per_node) >= m0)
+      if (i + k0 + node_offset >= m0)
       {
         int end = 0;
         // Do until wrap
-        for (int j = 0; (i + j) + (rid * num_elements_per_node) < m0; ++j)
+        for (int j = 0; i + j + node_offset < m0; ++j)
         {
-          res += input_distributed[((i + j) + (rid * num_elements_per_node))] * weights_distributed[j];
+          res += input_distributed[i + j + node_offset] * weights_distributed[j];
           end = j;
         }
         // Do wrapped elements
         for (int j = end + 1; j < k0; ++j)
         {
-          res += input_distributed[((i + j) + (rid * num_elements_per_node)) - m0] * weights_distributed[j];
+          res += input_distributed[i + j + node_offset - m0] * weights_distributed[j];
         }
       }
       else
       {
         for (int j = 0; j < k0; ++j)
         {
-          res += input_distributed[((i + j) + (rid * num_elements_per_node))] * weights_distributed[j];
+          res += input_distributed[i + j + node_offset] * weights_distributed[j];
         }
       }
       output_distributed[i] = res;
