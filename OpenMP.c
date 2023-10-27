@@ -59,139 +59,143 @@
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed, float *output_distributed)
 {
-  int rid;
-  int num_ranks;
-  int tag = 0;
-  MPI_Status status;
-  int root_rid = 0;
+	int rid;
+	int num_ranks;
+	int tag = 0;
+	MPI_Status status;
+	int root_rid = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  int input_length = m0;
-  int weights_length = k0;
+	int input_length = m0;
+	int weights_length = k0;
 
-  if (rid == root_rid)
-  {
-    omp_set_num_threads(2);
-    #pragma omp parallel
-    for (int i = 0; i < input_length; i++)
-    {
-      float res = 0.f;
-      for (int j = 0; j < weights_length; ++j)
-      {
-        // if i + j exceeds input length, wrapping will occur. Compensate by subtracting input length
-        int input_index = (i + j < input_length) ? (i + j) : (i + j - input_length);
-        res += input_distributed[input_index] * weights_distributed[j];
-      }
-      output_distributed[i] = res;
-    }
-  }
-  else
-  {
-  }
+	if (rid == root_rid)
+	{
+		omp_set_num_threads(2);
+#pragma omp parallel
+		{
+#pragma omp for
+			for (int i = 0; i < input_length; i++)
+			{
+				float res = 0.f;
+				for (int j = 0; j < weights_length; ++j)
+				{
+					// if i + j exceeds input length, wrapping will occur. Compensate by subtracting
+					// input length
+					int input_index = (i + j < input_length) ? (i + j) : (i + j - input_length);
+					res += input_distributed[input_index] * weights_distributed[j];
+				}
+				output_distributed[i] = res;
+			}
+		}
+	}
+	else
+	{
+	}
 }
 
 // Create the buffers on each node
 void DISTRIBUTED_ALLOCATE_NAME(int m0, int k0, float **input_distributed, float **weights_distributed,
-                               float **output_distributed)
+			       float **output_distributed)
 {
-  int rid;
-  int num_ranks;
-  int tag = 0;
-  MPI_Status status;
-  int root_rid = 0;
+	int rid;
+	int num_ranks;
+	int tag = 0;
+	MPI_Status status;
+	int root_rid = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  if (rid == root_rid)
-  {
+	if (rid == root_rid)
+	{
 
-    *input_distributed = (float *)malloc(sizeof(float) * m0);
-    *output_distributed = (float *)malloc(sizeof(float) * m0);
-    *weights_distributed = (float *)malloc(sizeof(float) * k0);
-  }
-  else
-  {
-  }
+		*input_distributed = (float *)malloc(sizeof(float) * m0);
+		*output_distributed = (float *)malloc(sizeof(float) * m0);
+		*weights_distributed = (float *)malloc(sizeof(float) * k0);
+	}
+	else
+	{
+	}
 }
 
 void DISTRIBUTE_DATA_NAME(int m0, int k0, float *input_sequential, float *weights_sequential, float *input_distributed,
-                          float *weights_distributed)
+			  float *weights_distributed)
 {
 
-  int rid;
-  int num_ranks;
-  int tag = 0;
-  MPI_Status status;
-  int root_rid = 0;
+	int rid;
+	int num_ranks;
+	int tag = 0;
+	MPI_Status status;
+	int root_rid = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  if (rid == root_rid)
-  {
-    // Distribute the inputs
-    for (int i0 = 0; i0 < m0; ++i0)
-    {
-      input_distributed[i0] = input_sequential[i0];
-    }
+	if (rid == root_rid)
+	{
+		// Distribute the inputs
+		for (int i0 = 0; i0 < m0; ++i0)
+		{
+			input_distributed[i0] = input_sequential[i0];
+		}
 
-    // Distribute the weights
-    for (int p0 = 0; p0 < k0; ++p0)
-    {
-      weights_distributed[p0] = weights_sequential[p0];
-    }
-  }
-  else
-  {
-  }
+		// Distribute the weights
+		for (int p0 = 0; p0 < k0; ++p0)
+		{
+			weights_distributed[p0] = weights_sequential[p0];
+		}
+	}
+	else
+	{
+	}
 }
 
 void COLLECT_DATA_NAME(int m0, int k0, float *output_distributed, float *output_sequential)
 {
-  int rid;
-  int num_ranks;
-  int tag = 0;
-  MPI_Status status;
-  int root_rid = 0;
+	int rid;
+	int num_ranks;
+	int tag = 0;
+	MPI_Status status;
+	int root_rid = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  if (rid == root_rid)
-  {
+	if (rid == root_rid)
+	{
 
-    // Collect the output
-    for (int i0 = 0; i0 < m0; ++i0)
-      output_sequential[i0] = output_distributed[i0];
-  }
-  else
-  {
-  }
+		// Collect the output
+		for (int i0 = 0; i0 < m0; ++i0)
+			output_sequential[i0] = output_distributed[i0];
+	}
+	else
+	{
+	}
 }
 
 void DISTRIBUTED_FREE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed,
-                           float *output_distributed)
+			   float *output_distributed)
 {
-  int rid;
-  int num_ranks;
-  int tag = 0;
-  MPI_Status status;
-  int root_rid = 0;
+	int rid;
+	int num_ranks;
+	int tag = 0;
+	MPI_Status status;
+	int root_rid = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rid);
-  MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  if (rid == root_rid)
-  {
+	if (rid == root_rid)
+	{
 
-    free(input_distributed);
-    free(weights_distributed);
-    free(output_distributed);
-  }
-  else
-  {
-  }
+		free(input_distributed);
+		free(weights_distributed);
+		free(output_distributed);
+	}
+	else
+	{
+	}
 }
