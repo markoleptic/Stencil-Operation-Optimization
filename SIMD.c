@@ -73,15 +73,13 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	MPI_Status status;
 	int root_rid = 0;
 
-	const int threshold = m0 - k0;
+	int threshold = m0 - k0;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
 	if (rid == root_rid)
 	{
-		// Holds the current 8 elements, starting at i + j + node_offset
-		__m256 input_vec;
 		// The weighted sum for the 8 elements, where each element is different
 		__m256 weighted_sum;
 		// Array of vectors, where each element contains the value from weights_distributed repeated 8 times
@@ -93,21 +91,25 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 			simd_weights[i] = _mm256_set1_ps(weights_distributed[i]);
 		}
 
+		int simdthreshold = threshold - (threshold % SIMD_WIDTH);
+		if (simdthreshold <= 0)
+			simdthreshold = 0;
+
 		// Process 8 elements at a time, no overlap when less than threshold
-		for (int i = 0; i < threshold; i += SIMD_WIDTH)
+		for (int i = 0; i < simdthreshold; i += SIMD_WIDTH)
 		{
 			weighted_sum = _mm256_setzero_ps();
 			for (int j = 0; j < k0; j++)
 			{
-				input_vec = _mm256_loadu_ps(&input_distributed[(i + j)]);
 				// "Broadcast" the weight to all elements in the vector
-				weighted_sum = _mm256_fmadd_ps(input_vec, simd_weights[j], weighted_sum);
+				weighted_sum = _mm256_fmadd_ps(_mm256_loadu_ps(input_distributed + i + j),
+							       simd_weights[j], weighted_sum);
 			}
 			// Simd version of output_distributed[i0] = res
-			_mm256_storeu_ps(&output_distributed[i], weighted_sum);
+			_mm256_storeu_ps(output_distributed + i, weighted_sum);
 		}
 
-		// Handle remaining elements that have overlap and need to wrap
+		// Overflow possible
 		for (int i = threshold; i < m0; ++i)
 		{
 			float res = 0.f;
