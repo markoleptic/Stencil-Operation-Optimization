@@ -36,6 +36,8 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "OpenMPFunctions.c"
 
 #ifndef COMPUTE_NAME
 #define COMPUTE_NAME baseline
@@ -64,31 +66,32 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	int tag = 0;
 	MPI_Status status;
 	int root_rid = 0;
+	const int threshold = m0 - k0;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rid);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-	int input_length = m0;
-	int weights_length = k0;
-
 	if (rid == root_rid)
 	{
-		omp_set_num_threads(2);
-#pragma omp parallel
+		// No overflow, split using best performing function
+		openMp_WithoutSplit_WithoutTemp_WithPrivate(m0, k0, input_distributed, weights_distributed,
+							    output_distributed);
+
+		// Overflow possible, will never be large enough to justify creating/destroying threads (i think)
+		for (int i = threshold; i < m0; ++i)
 		{
-#pragma omp for
-			for (int i = 0; i < input_length; i++)
+			float res = 0.f;
+			int end = 0;
+			for (int j = 0; i + j < m0; ++j)
 			{
-				float res = 0.f;
-				for (int j = 0; j < weights_length; ++j)
-				{
-					// if i + j exceeds input length, wrapping will occur. Compensate by subtracting
-					// input length
-					int input_index = (i + j < input_length) ? (i + j) : (i + j - input_length);
-					res += input_distributed[input_index] * weights_distributed[j];
-				}
-				output_distributed[i] = res;
+				res += input_distributed[j + i] * weights_distributed[j];
+				end = j;
 			}
+			for (int j = end + 1; j < k0; ++j)
+			{
+				res += input_distributed[j + i - m0] * weights_distributed[j];
+			}
+			output_distributed[i] = res;
 		}
 	}
 	else
