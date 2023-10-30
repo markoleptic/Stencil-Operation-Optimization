@@ -1,0 +1,10 @@
+PDN LAB02 Timeline:
+
+Work to be done:
+Lab consists of optimizing given code, compiling the lab write ups and deliverables including the timeline, meeting logs, lab report analysis, and self assessments. We created several different variants of the code with different parallelization, loop transforms, and other techniques to achieve optimization as per the  lab and tested them appropriately. 
+
+How the work is divided:
+We agreed to divide and work on certain deliverables for some of the writeup and coding portions to the best of our abilities, and met up during in-class lab days to collaboratively find solutions to a few problems. 
+
+Tentative Timeline:
+We will try to meet and communicate with each other via Discord and during in-class lab days in order to check on progress and ensure the lab is completed in a timely manner. 
