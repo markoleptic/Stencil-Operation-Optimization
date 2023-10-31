@@ -336,7 +336,7 @@ int main( int argc, char *argv[] )
       float nanoseconds = ((float)min_res)/(num_runs_per_trial);
 
       // Number of floating point operations
-      long num_flops = m0*k0*2;
+      long num_flops = m0 * k0 * 2;
 
       // This gives us throughput as GFLOP/s
       float throughput =  num_flops / nanoseconds;
