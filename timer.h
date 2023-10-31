@@ -13,7 +13,7 @@
 
 
 #define TIMER_GET_CLOCK(_counter_)  	{\
-  MPI_Barrier(MPI_COMM_WORLD); \
+    /*MPI_Barrier(MPI_COMM_WORLD);*/	 \
   _counter_= MPI_Wtime();\
   }
 
