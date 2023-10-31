@@ -2,7 +2,7 @@
 #define TIMER_H
 
 
-#define USE_MPIWTIME 1
+#define USE_MPIWTIME 0
 #define USE_NANOPRECISION 1 // NOTE: If this breaks the build then set it to 0
 
 #if USE_MPIWTIME
@@ -13,6 +13,7 @@
 
 
 #define TIMER_GET_CLOCK(_counter_)  	{\
+<<<<<<< Updated upstream
     /*MPI_Barrier(MPI_COMM_WORLD);*/	 \
   _counter_= MPI_Wtime();\
   }
