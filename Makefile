@@ -33,7 +33,7 @@ KMEDIUM=7
 KLARGE=11
 
 # This is just for local runs
-NUMRANKS=8
+NUMRANKS=4
 
 # You should not need to adjust this
 MPIVER_SCHOONER="OpenMPI"

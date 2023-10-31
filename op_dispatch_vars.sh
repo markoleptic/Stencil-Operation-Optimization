@@ -18,10 +18,10 @@ OP_BASELINE_FILE="baseline_op.c"    #
 
 OP_SUBMISSION_VAR01_FILE="SplittingAndUnswitching.c"
 OP_SUBMISSION_VAR02_FILE="MPI_Collective_v2.c"
-OP_SUBMISSION_VAR03_FILE="SIMD.c"
-OP_SUBMISSION_VAR04_FILE="OpenMP.c"
+OP_SUBMISSION_VAR03_FILE="OpenMP.c"
+OP_SUBMISSION_VAR04_FILE="SIMD.c"
 OP_SUBMISSION_VAR05_FILE="TwoParallel.c"
-OP_SUBMISSION_VAR06_FILE="ThreeParallel.c"
+OP_SUBMISSION_VAR06_FILE="TwoParallel_OpenMP.c"
 
 ######################################################
 # You can even change the compiler flags if you want #

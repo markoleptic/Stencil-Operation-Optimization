@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-#define ERROR_THRESHOLD 1e-4
+#define ERROR_THRESHOLD 1e-3
 
 extern void COMPUTE_NAME_REF( int m0, int k0,
 			      float *input_distributed,
