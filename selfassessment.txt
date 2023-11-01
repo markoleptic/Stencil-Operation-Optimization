@@ -3,11 +3,11 @@ We completed all aspects of the lab. We didn't divide things up entirely at firs
 We stuck to our original statement of work pretty well with some variations here and there. The SIMD and OpenMP were probably the most time intensive parts for us. We just couldn't get any performance boosts from OpenMP and it would often make our code break.
 
 Hours:
-Mark - 
-Chase - 20
-Lana - 
+Mark - 10
+Chase - 15
+Lana - 10
 
-Total: 
+Total: 35
 
 Points Distribution:
 33/33/33
