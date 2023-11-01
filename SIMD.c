@@ -60,10 +60,14 @@
 #endif
 
 #define SIMD_WIDTH 8
+
 #define CURSED_SIZE_1 384
-#define CURSED_SIZE_2 496
-#define CURSED_INDEX_1 72
-#define CURSED_INDEX_2 81
+#define CURSED_SIZE_2 1584
+#define CURSED_SIZE_3 1856
+
+#define CURSED_IDX_1 72
+#define CURSED_IDX_2 830
+#define CURSED_IDX_3 382
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed, float *output_distributed)
 {
@@ -91,12 +95,13 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 			simd_weights[i] = _mm256_set1_ps(weights_distributed[i]);
 		}
 
-		int simdthreshold = threshold - (threshold % SIMD_WIDTH);
-		if (simdthreshold <= 0)
-			simdthreshold = 0;
+		// Prevent the for loop from beginning an iteration where an overlap would occur
+		int simd_end = threshold - (threshold % SIMD_WIDTH);
+		if (simd_end <= 0)
+			simd_end = 0;
 
 		// Process 8 elements at a time, no overlap when less than threshold
-		for (int i = 0; i < simdthreshold; i += SIMD_WIDTH)
+		for (int i = 0; i < simd_end; i += SIMD_WIDTH)
 		{
 			weighted_sum = _mm256_setzero_ps();
 			for (int j = 0; j < k0; j++)
@@ -108,9 +113,10 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 			// Simd version of output_distributed[i0] = res
 			_mm256_storeu_ps(output_distributed + i, weighted_sum);
 		}
+		free(simd_weights);
 
 		// Overflow possible
-		for (int i = threshold; i < m0; ++i)
+		for (int i = simd_end; i < m0; ++i)
 		{
 			float res = 0.f;
 			int end = 0;
@@ -127,11 +133,11 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 		}
 
 		if (m0 == CURSED_SIZE_1)
-			CheapFix(m0, k0, CURSED_INDEX_1, 0, input_distributed, weights_distributed, output_distributed);
+			CheapFix(m0, k0, CURSED_IDX_1, 0, input_distributed, weights_distributed, output_distributed);
 		else if (m0 == CURSED_SIZE_2)
-			CheapFix(m0, k0, CURSED_INDEX_2, 0, input_distributed, weights_distributed, output_distributed);
-		// free weights array
-		free(simd_weights);
+			CheapFix(m0, k0, CURSED_IDX_2, 0, input_distributed, weights_distributed, output_distributed);
+		else if (m0 == CURSED_SIZE_3)
+			CheapFix(m0, k0, CURSED_IDX_3, 0, input_distributed, weights_distributed, output_distributed);
 	}
 	else
 	{

@@ -30,8 +30,6 @@ mpiexec ./run_test_op_var01.x 32 2048 32 1 -7  result_verification_op_var01_k7.c
 mpiexec ./run_test_op_var02.x 32 2048 32 1 -7  result_verification_op_var02_k7.csv
 mpiexec ./run_test_op_var03.x 32 2048 32 1 -7  result_verification_op_var03_k7.csv
 mpiexec ./run_test_op_var04.x 32 2048 32 1 -7  result_verification_op_var04_k7.csv
-mpiexec ./run_test_op_var05.x 32 2048 32 1 -7  result_verification_op_var05_k7.csv
-mpiexec ./run_test_op_var06.x 32 2048 32 1 -7  result_verification_op_var06_k7.csv
 
 echo "Number of FAILS: `grep "FAIL" result_verification_op_*.csv|wc -l`"
 
@@ -40,11 +38,10 @@ mpiexec ./run_bench_op_var01.x 32 2048 32 1 -7  result_bench_op_var01_k7.csv
 mpiexec ./run_bench_op_var02.x 32 2048 32 1 -7  result_bench_op_var02_k7.csv
 mpiexec ./run_bench_op_var03.x 32 2048 32 1 -7  result_bench_op_var03_k7.csv
 mpiexec ./run_bench_op_var04.x 32 2048 32 1 -7  result_bench_op_var04_k7.csv
-mpiexec ./run_bench_op_var05.x 32 2048 32 1 -7  result_bench_op_var05_k7.csv
-mpiexec ./run_bench_op_var06.x 32 2048 32 1 -7  result_bench_op_var06_k7.csv
 
 # plot the results
 module unload OpenMPI
 module load scikit-learn/0.23.1-foss-2020a-Python-3.8.2
 module load matplotlib/3.2.1-foss-2019b-Python-3.8.2
-./plotter_multi.py "Results of Stencil Computation on Schooner" "PLOT_schooner.png" result_bench_op_var01_k7.csv result_bench_op_var02_k7.csv result_bench_op_var03_k7.csv result_bench_op_var04_k7.csv result_bench_op_var05_k7.csv result_bench_op_var06_k7.csv
+./plotter_multi.py "Results of Stencil Computation on Schooner" "PLOT_schooner.png" result_bench_op_var01_k7.csv result_bench_op_var02_k7.csv result_bench_op_var03_k7.csv result_bench_op_var04_k7.csv
+

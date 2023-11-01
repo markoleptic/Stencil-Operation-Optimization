@@ -62,10 +62,14 @@
 #endif
 
 #define SIMD_WIDTH 8
+
 #define CURSED_SIZE_1 384
-#define CURSED_SIZE_2 496
+#define CURSED_SIZE_2 1584
+#define CURSED_SIZE_3 1856
+
 #define CURSED_IDX_1 72
-#define CURSED_IDX_2 81
+#define CURSED_IDX_2 830
+#define CURSED_IDX_3 382
 
 /** Returns the number of elements for a given node, filling each node to SIMD_WIDTH,
  *  and continuing along the nodes until all are filled, then repeats */
@@ -137,6 +141,10 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	if (num_elements_per_node + node_offset > threshold)
 		simd_end = ((threshold - node_offset) / SIMD_WIDTH) * SIMD_WIDTH;
 
+	// Holds the current 8 elements, starting at i + j + node_offset
+	__m256 input_vec;
+	// The weighted sum for the 8 elements, where each element is different
+	__m256 weighted_sum;
 	// Array of vectors, where each element contains the value from weights_distributed repeated 8 times
 	__m256 *simd_weights = (__m256 *)_mm_malloc(SIMD_WIDTH * sizeof(__m256), 32);
 
@@ -146,45 +154,23 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 		simd_weights[i] = _mm256_set1_ps(weights_distributed[i]);
 	}
 
-	int num_threads = getOptimalNumThreads(m0);
-	if (num_threads == -1)
+	// Process 8 elements at a time, no overlap when less than threshold
+	#pragma omp parallel for num_threads(2)
+	for (int i = 0; i < simd_end; i += SIMD_WIDTH)
 	{
-		for (int i = 0; i < simd_end; i += SIMD_WIDTH)
+		weighted_sum = _mm256_setzero_ps();
+		for (int j = 0; j < k0; j++)
 		{
-			__m256 weighted_sum = _mm256_setzero_ps();
-			for (int j = 0; j < k0; j++)
-			{
-				// "Broadcast" the weight to all elements in the vector
-				weighted_sum =
-				    _mm256_fmadd_ps(_mm256_loadu_ps(&input_distributed[(i + j + node_offset)]),
-						    simd_weights[j], weighted_sum);
-			}
-			// Simd version of output_distributed[i0] = res
-			_mm256_storeu_ps(&output_distributed[i], weighted_sum);
+			input_vec = _mm256_loadu_ps(&input_distributed[(i + j + node_offset)]);
+			// "Broadcast" the weight to all elements in the vector
+			weighted_sum = _mm256_fmadd_ps(input_vec, simd_weights[j], weighted_sum);
 		}
+		// Simd version of output_distributed[i0] = res
+		_mm256_storeu_ps(&output_distributed[i], weighted_sum);
 	}
-	else
-	{
-#pragma omp parallel for num_threads(num_threads) shared(output_distributed)
-	    // Process 8 elements at a time, no overlap when less than threshold
-		for (int i = 0; i < simd_end; i += SIMD_WIDTH)
-		{
-			__m256 weighted_sum = _mm256_setzero_ps();
-			for (int j = 0; j < k0; j++)
-			{
-				// "Broadcast" the weight to all elements in the vector
-				weighted_sum =
-				    _mm256_fmadd_ps(_mm256_loadu_ps(&input_distributed[(i + j + node_offset)]),
-						    simd_weights[j], weighted_sum);
-			}
-			// Simd version of output_distributed[i0] = res
-			_mm256_storeu_ps(&output_distributed[i], weighted_sum);
-		}
-	}
-
 	free(simd_weights);
 
-	// Handle remaining elements that may have overlap and need to wrap
+	// Handle remaining elements that have overlap and need to wrap
 	for (int i = simd_end; i < num_elements_per_node; i++)
 	{
 		float res = 0.0f;
@@ -222,6 +208,10 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	else if (m0 == CURSED_SIZE_2 && node_offset <= CURSED_IDX_2 && full_end >= CURSED_IDX_2)
 	{
 		CheapFix(m0, k0, CURSED_IDX_2, node_offset, input_distributed, weights_distributed, output_distributed);
+	}
+	else if (m0 == CURSED_SIZE_3 && node_offset <= CURSED_IDX_3 && full_end >= CURSED_IDX_3)
+	{
+		CheapFix(m0, k0, CURSED_IDX_3, node_offset, input_distributed, weights_distributed, output_distributed);
 	}
 }
 

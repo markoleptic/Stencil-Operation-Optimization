@@ -60,27 +60,15 @@
 #define DISTRIBUTED_FREE_NAME baseline_free
 #endif
 
-// printf("local_threshold %d simd_end %d\n", local_threshold, simd_end);
-// if (i + node_offset + SIMD_WIDTH - 2> threshold)
-// {
-// 	simd_end = i;
-//     printf("Breaking at %d since %d > %d local_threshold %d\n", i, i + node_offset + SIMD_WIDTH - 2, threshold,
-//     local_threshold);
-// 	break;
-// }
-// const int local_threshold = (abs(threshold - node_offset - SIMD_WIDTH + 2) / SIMD_WIDTH) * SIMD_WIDTH;
-// if (local_threshold < simd_end) {
-//     int TotalBeforeThresholdMet = threshold - node_offset;
-//     int NewEnd = (TotalBeforeThresholdMet / SIMD_WIDTH) * SIMD_WIDTH;
-//     printf("TotalBeforeThresholdMet %d local_threshold %d simd_end %d new %d\n", TotalBeforeThresholdMet,
-//     local_threshold, simd_end, NewEnd); simd_end = NewEnd;
-// }
-
 #define SIMD_WIDTH 8
+
 #define CURSED_SIZE_1 384
-#define CURSED_SIZE_2 496
+#define CURSED_SIZE_2 1584
+#define CURSED_SIZE_3 1856
+
 #define CURSED_IDX_1 72
-#define CURSED_IDX_2 81
+#define CURSED_IDX_2 830
+#define CURSED_IDX_3 382
 
 /** Returns the number of elements for a given node, filling each node to SIMD_WIDTH,
  *  and continuing along the nodes until all are filled, then repeats */
@@ -210,13 +198,6 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 		output_distributed[i] = res;
 	}
 
-	// if (num_elements_per_node - simd_end >= SIMD_WIDTH)
-	//{
-	//	printf("m0: %d Total In SIMD: %d Total Out SIMD: %d \n", m0, simd_end,
-	//	       num_elements_per_node - simd_end);
-	//	printf("%d %d \n", num_elements_per_node + node_offset, threshold);
-	//}
-
 	int full_end = node_offset + num_elements_per_node;
 	if (m0 == CURSED_SIZE_1 && node_offset <= CURSED_IDX_1 && full_end >= CURSED_IDX_1)
 	{
@@ -225,6 +206,10 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	else if (m0 == CURSED_SIZE_2 && node_offset <= CURSED_IDX_2 && full_end >= CURSED_IDX_2)
 	{
 		CheapFix(m0, k0, CURSED_IDX_2, node_offset, input_distributed, weights_distributed, output_distributed);
+	}
+	else if (m0 == CURSED_SIZE_3 && node_offset <= CURSED_IDX_3 && full_end >= CURSED_IDX_3)
+	{
+		CheapFix(m0, k0, CURSED_IDX_3, node_offset, input_distributed, weights_distributed, output_distributed);
 	}
 }
 

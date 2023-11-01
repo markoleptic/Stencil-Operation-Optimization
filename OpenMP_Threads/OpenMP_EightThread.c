@@ -73,7 +73,7 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 	if (rid == root_rid)
 	{
 		// No Overflow
-		#pragma omp parallel for simd num_threads(1)
+		#pragma omp parallel for simd num_threads(8)
 		for (int i = 0; i < threshold; ++i)
 		{
 			float res = 0.f;
