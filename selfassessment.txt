@@ -1,0 +1,13 @@
+We completed all aspects of the lab. We didn't divide things up entirely at first but Chase looked into MPI, Mark looked into SIMD, and Lana started research on the loop transformations. We ended up splitting the variants generally along those lines with more collaboration in the beginning and end. At the start, we wanted to define what was needed for each variant generally and map out a good roadmap to get there. Near the end, we collaborated mostly on getting the multiple forms of parallelism working and obviously for the writeup.
+
+We stuck to our original statement of work pretty well with some variations here and there. The SIMD and OpenMP were probably the most time intensive parts for us. We just couldn't get any performance boosts from OpenMP and it would often make our code break.
+
+Hours:
+Mark - 
+Chase - 20
+Lana - 
+
+Total: 
+
+Points Distribution:
+33/33/33
