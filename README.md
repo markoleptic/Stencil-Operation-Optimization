@@ -17,5 +17,3 @@ This repository implements various parallel optimization techniques for a 1D ste
 - **baseline_op.c:** The starting point for all variants.
 - **writeup.pdf:** Contains a full description and results of the implemented optimization techniques.
 
-Feel free to explore each file for detailed implementation and optimization strategies.
-
