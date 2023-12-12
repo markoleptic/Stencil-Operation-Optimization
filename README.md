@@ -1,4 +1,4 @@
-# Stencil Transformation Optimization
+# Stencil Operation Optimization
 
 This repository implements various parallel optimization techniques for a 1D stencil operation. The starting point for all variants is `baseline_op.c`.
 
